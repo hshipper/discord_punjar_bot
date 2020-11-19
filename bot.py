@@ -65,8 +65,8 @@ class RecordPuns(commands.Cog):
             self.puns[member.id]['count'] += 1
         except KeyError:
             self.puns[member.id] = {'count': 1}
-        await ctx.send(f"{member} has made \
-            {self.puns[member.id]['count']} awful jokes.")
+        await ctx.send(f"{member} has made {self.puns[member.id]['count']} \
+            awful jokes.")
 
     @commands.command()
     async def subtract(self, ctx, *, member: discord.Member = None):
