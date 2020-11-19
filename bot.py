@@ -52,38 +52,35 @@ async def test(ctx):
 
 class RecordPuns(commands.Cog):
     def __init__(self, bot):
+        with open('pun_data.json', 'r') as pun_file:
+            self.puns = json.load(pun_file)
         self.bot = bot
         self._last_punmaker = None
-
-    @commands.Cog.listener()
-    async def on_ready():
-        with open('pun_data.json', 'r') as pun_file:
-            puns = json.load(pun_file)
 
     @commands.command()
     async def deposit(self, ctx, *, member: discord.Member = None):
         member = member or ctx.author
         self._last_punmaker = member
         try:
-            puns[member.id]['count'] += 1
+            self.puns[member.id]['count'] += 1
         except KeyError:
-            puns[member.id] = {'count': 1}
+            self.puns[member.id] = {'count': 1}
         await ctx.send(f"{member} has made \
-            {puns[member.id]['count']} awful jokes.")
+            {self.puns[member.id]['count']} awful jokes.")
 
     @commands.command()
     async def subtract(self, ctx, *, member: discord.Member = None):
         member = member or ctx.author
         try:
-            puns[member.id]['count'] -= 1
+            self.puns[member.id]['count'] -= 1
             await ctx.send(f"{member}\'s last joke wasn\'t that bad. They\'ve \
-                made {puns[member.id]['count']} puns.")
+                made {self.puns[member.id]['count']} puns.")
         except KeyError:
             await ctx.send(f'{member} hasn\'t made any bad jokes,\
                  unbelievably.')
 
 
-bot.add_cog(RecordPuns)
+bot.add_cog(RecordPuns(bot))
 
 
 # the bot needs a secret token to connect
