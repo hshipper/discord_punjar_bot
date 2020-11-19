@@ -83,6 +83,9 @@ class RecordPuns(commands.Cog):
                  unbelievably.')
 
 
+bot.add_cog(RecordPuns)
+
+
 # the bot needs a secret token to connect
 # that token is being stored in a separate file for safety purposes
 
