@@ -27,15 +27,16 @@ intents.members = True
 bot = commands.Bot(command_prefix="$", intents=intents)
 
 
-
 @bot.event
 async def on_ready():
     print(f'{bot.user.name} is connected!')
     await bot.change_presence(activity=discord.Game(name='around with tests'))
 
+
 @bot.command()
 async def testpun(ctx, arg):
     await ctx.send(f'{arg} made a terrible pun.')
+
 
 @bot.command()
 async def members(ctx):
@@ -43,42 +44,43 @@ async def members(ctx):
         print(user.id)
         await ctx.send(f'{user.name}\'s id is {user.id}')
 
+
 @bot.command()
 async def test(ctx):
     print(len(ctx.guild.roles))
 
 
 class RecordPuns(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+        self._last_punmaker = None
+
     @commands.Cog.listener()
     async def on_ready():
         with open('pun_data.json', 'r') as pun_file:
-            puns = json.load('pun_data.json')
+            puns = json.load(pun_file)
 
     @commands.command()
     async def deposit(self, ctx, *, member: discord.Member = None):
         member = member or ctx.author
+        self._last_punmaker = member
         try:
             puns[member.id]['count'] += 1
-        except:
+        except KeyError:
             puns[member.id] = {'count': 1}
-        await ctx.send(f'{member} has made {puns[member.id]['count']} awful jokes.')
+        await ctx.send(f"{member} has made \
+            {puns[member.id]['count']} awful jokes.")
 
     @commands.command()
-    async def subtract(self, ctx, *, member: discord.Member = None)
+    async def subtract(self, ctx, *, member: discord.Member = None):
         member = member or ctx.author
         try:
             puns[member.id]['count'] -= 1
-            await ctx.send(f'{member}\'s last joke wasn\'t that bad. They\'ve made {puns[member.id]['count']} puns.')
-        except:
-            ctx.send(f'{member} hasn\'t made any bad jokes, unbelievably.')
-
-class TrackingPuns(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
-
-    
-
-            
+            await ctx.send(f"{member}\'s last joke wasn\'t that bad. They\'ve \
+                made {puns[member.id]['count']} puns.")
+        except KeyError:
+            await ctx.send(f'{member} hasn\'t made any bad jokes,\
+                 unbelievably.')
 
 
 # the bot needs a secret token to connect
@@ -87,5 +89,6 @@ class TrackingPuns(commands.Cog):
 
 with open(".token_file", "r") as tk:
     token = tk.read()
+
 
 bot.run(token)
