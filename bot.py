@@ -22,38 +22,65 @@ class RecordPuns(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self._last_punmaker = None
+        self._last_pun_time = None
         self.db = firestore.Client()
 
     @commands.Cog.listener()
     async def on_ready(self):
         create_user_documents(self)
 
-    @commands.command()
+    @commands.command(name="deposit")
     async def deposit(self, ctx, *, member: discord.Member = None):
         member = member or ctx.author
         self._last_punmaker = member
-        punmaker_data = self.db.collection(u'puns').document(str(member.id))
-        punmaker_data.update({u'count': firestore.Increment(1)})
-        await ctx.send(
-            f"{member.mention} has made {self.puns[member.id]['count']}"
-            "awful jokes."
-        )
+        punmaker_data = self.db.collection("puns").document(str(member.id))
+        pun_count = punmaker_data.get().to_dict()["pun_count"]
+        punmaker_data.update({"count": firestore.Increment(1)})
+        await ctx.send(f"{member.mention} has made {pun_count + 1}"
+                       "awful jokes.")
 
-    @commands.command()
+    @commands.command(name="subtract")
     async def subtract(self, ctx, *, member: discord.Member = None):
         member = member or ctx.author
-        try:
-            self.puns[member.id]["count"] -= 1
+        punmaker_data = self.db.collection("puns").document(str(member.id))
+        pun_count = punmaker_data.get().to_dict()["pun_count"]
+        if pun_count > 0:
+            punmaker_data.update({"pun_count": firestore.Increment(-1)})
             await ctx.send(
-                f"{member.mention}\'s last joke wasn't that bad. They\'ve"
-                "made {self.puns[member.id]['count']} puns."
+                f"{member.mention}'s last joke wasn't that bad. They've"
+                f"made {pun_count - 1} puns."
             )
-        except KeyError:
+        else:
             await ctx.send(
-                f"{member.mention} hasn\'t made any bad jokes,"
-                "unbelievably."
+                f"{member.mention} hasn't made any bad jokes," "unbelievably."
             )
 
+    @commands.command(name="puncount")
+    async def count_puns(self, ctx, *, member: discord.Member = None):
+        member = member or ctx.author
+        punmaker_data = self.db.collection("puns").document(str(member.id))
+        pun_count = punmaker_data.get().to_dict()["pun_count"]
+        await ctx.send(f"{member.mention} has contributed ${pun_count}"
+                       " to the pun jar.")
+
+
+"""
+    @commands.command(name="lastpun")
+    async def identify_last_pun(self, ctx, member: discord.Member = None):
+        if member:
+            punmaker_data = self.db.collection("puns").document(str(member.id))
+            last_pun_time = punmaker_data.get().to_dict()["last_pun"]
+            last_pun_time_tz = last_pun_time.replace(tzinfo=timezone.pst
+            ).astimezone(tz=None)
+            await ctx.send(
+                f"{member.mention} last made a pun at "
+                f"{last_pun_time.isoformat(sep=' ')}"
+            )
+        if self._last_punmaker:
+            await ctx.send(f"{self._last_punmaker.mention} made the last pun")
+        else:
+            await ctx.send("I forgot who made the last pun.")
+"""
 
 bot.add_cog(RecordPuns(bot))
 

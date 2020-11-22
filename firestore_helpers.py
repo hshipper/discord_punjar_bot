@@ -22,6 +22,6 @@ def create_user_documents(self):
             ref = self.db.collection(u'puns').document(user)
             batch.set(ref, {u'date_added': datetime.datetime.now(),
                             u'pun_count': 0,
-                            u'last_pun': })
+                            u'last_pun': None})
     print('All new users have been added!')
     batch.commit()
