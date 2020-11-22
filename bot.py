@@ -6,7 +6,9 @@ import discord
 from discord.ext import commands
 from google.cloud import firestore
 from firestore_helpers import create_user_documents
+import os
 
+os.environ["TZ"] = "US/Western"
 intents = discord.Intents.default()
 intents.members = True
 bot = commands.Bot(command_prefix="$", intents=intents)
@@ -15,7 +17,7 @@ bot = commands.Bot(command_prefix="$", intents=intents)
 @bot.event
 async def on_ready():
     print(f"{bot.user.name} is connected!")
-    await bot.change_presence(activity=discord.Game(name="around with tests"))
+    await bot.change_presence(activity=discord.Game(name="tracking your bad jokes"))
 
 
 class RecordPuns(commands.Cog):
@@ -36,8 +38,7 @@ class RecordPuns(commands.Cog):
         punmaker_data = self.db.collection("puns").document(str(member.id))
         pun_count = punmaker_data.get().to_dict()["pun_count"]
         punmaker_data.update({"pun_count": firestore.Increment(1)})
-        await ctx.send(f"{member.mention} has made {pun_count + 1} "
-                       "awful jokes.")
+        await ctx.send(f"{member.mention} has made {pun_count + 1} " "awful jokes.")
 
     @commands.command(name="subtract")
     async def subtract(self, ctx, *, member: discord.Member = None):
@@ -60,18 +61,15 @@ class RecordPuns(commands.Cog):
         member = member or ctx.author
         punmaker_data = self.db.collection("puns").document(str(member.id))
         pun_count = punmaker_data.get().to_dict()["pun_count"]
-        await ctx.send(f"{member.mention} has contributed ${pun_count}"
-                       " to the pun jar.")
+        await ctx.send(
+            f"{member.mention} has contributed ${pun_count}" " to the pun jar."
+        )
 
-
-"""
     @commands.command(name="lastpun")
     async def identify_last_pun(self, ctx, member: discord.Member = None):
         if member:
             punmaker_data = self.db.collection("puns").document(str(member.id))
             last_pun_time = punmaker_data.get().to_dict()["last_pun"]
-            last_pun_time_tz = last_pun_time.replace(tzinfo=timezone.pst
-            ).astimezone(tz=None)
             await ctx.send(
                 f"{member.mention} last made a pun at "
                 f"{last_pun_time.isoformat(sep=' ')}"
@@ -80,7 +78,7 @@ class RecordPuns(commands.Cog):
             await ctx.send(f"{self._last_punmaker.mention} made the last pun")
         else:
             await ctx.send("I forgot who made the last pun.")
-"""
+
 
 bot.add_cog(RecordPuns(bot))
 
