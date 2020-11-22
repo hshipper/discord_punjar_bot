@@ -4,9 +4,8 @@ A bot to listen to a discord server and keep track of puns that are made
 
 import discord
 from discord.ext import commands
-
-# from google.cloud import firestore
-import json
+from google.cloud import firestore
+from firestore_helpers import create_user_documents
 
 intents = discord.Intents.default()
 intents.members = True
@@ -21,10 +20,11 @@ async def on_ready():
 
 class RecordPuns(commands.Cog):
     def __init__(self, bot):
-        with open("pun_data.json", "r") as pun_file:
-            self.puns = json.load(pun_file)
         self.bot = bot
         self._last_punmaker = None
+        db = firestore.Client()
+        create_user_documents(self, bot, db)
+        self.puns = db.collections(u'puns')
 
     @commands.command()
     async def deposit(self, ctx, *, member: discord.Member = None):
