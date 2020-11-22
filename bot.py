@@ -32,10 +32,8 @@ class RecordPuns(commands.Cog):
     async def deposit(self, ctx, *, member: discord.Member = None):
         member = member or ctx.author
         self._last_punmaker = member
-        try:
-            self.puns[member.id]["count"] += 1
-        except KeyError:
-            self.puns[member.id] = {"count": 1}
+        punmaker_data = self.db.collection(u'puns').document(str(member.id))
+        punmaker_data.update({u'count': firestore.Increment(1)})
         await ctx.send(
             f"{member.mention} has made {self.puns[member.id]['count']}"
             "awful jokes."
