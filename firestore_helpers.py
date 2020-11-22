@@ -8,8 +8,8 @@ from datetime import date
 
 
 def create_user_documents(self, bot, db):
-    user_ids = [user.id for user in bot.users()]
-    query = self.puns.where(u'id', u'not-in', user_ids)
+    user_ids = [user.id for user in bot.users]
+    query = db.collection(u'puns').where(u'id', u'not-in', str(user_ids))
     results = query.stream()
     batch = db.batch()
     for result in results:
