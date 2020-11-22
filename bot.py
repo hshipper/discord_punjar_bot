@@ -22,9 +22,11 @@ class RecordPuns(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self._last_punmaker = None
-        db = firestore.Client()
-        create_user_documents(self, bot, db)
-        self.puns = db.collections(u'puns')
+        self.db = firestore.Client()
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        create_user_documents(self)
 
     @commands.command()
     async def deposit(self, ctx, *, member: discord.Member = None):
