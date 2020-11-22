@@ -35,7 +35,7 @@ class RecordPuns(commands.Cog):
         self._last_punmaker = member
         punmaker_data = self.db.collection("puns").document(str(member.id))
         pun_count = punmaker_data.get().to_dict()["pun_count"]
-        punmaker_data.update({"count": firestore.Increment(1)})
+        punmaker_data.update({"pun_count": firestore.Increment(1)})
         await ctx.send(f"{member.mention} has made {pun_count + 1} "
                        "awful jokes.")
 
