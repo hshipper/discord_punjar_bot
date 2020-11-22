@@ -17,7 +17,9 @@ bot = commands.Bot(command_prefix="$", intents=intents)
 @bot.event
 async def on_ready():
     print(f"{bot.user.name} is connected!")
-    await bot.change_presence(activity=discord.Game(name="tracking your bad jokes"))
+    await bot.change_presence(activity=discord.Game(
+        name="tracking your bad jokes")
+    )
 
 
 class RecordPuns(commands.Cog):
@@ -38,7 +40,8 @@ class RecordPuns(commands.Cog):
         punmaker_data = self.db.collection("puns").document(str(member.id))
         pun_count = punmaker_data.get().to_dict()["pun_count"]
         punmaker_data.update({"pun_count": firestore.Increment(1)})
-        await ctx.send(f"{member.mention} has made {pun_count + 1} " "awful jokes.")
+        await ctx.send(f"{member.mention} has made {pun_count + 1} "
+                       "awful jokes.")
 
     @commands.command(name="subtract")
     async def subtract(self, ctx, *, member: discord.Member = None):
@@ -70,12 +73,14 @@ class RecordPuns(commands.Cog):
         if member:
             punmaker_data = self.db.collection("puns").document(str(member.id))
             last_pun_time = punmaker_data.get().to_dict()["last_pun"]
+            self._last_pun_time = last_pun_time
             await ctx.send(
                 f"{member.mention} last made a pun at "
                 f"{last_pun_time.isoformat(sep=' ')}"
             )
         if self._last_punmaker:
-            await ctx.send(f"{self._last_punmaker.mention} made the last pun")
+            await ctx.send(f"{self._last_punmaker.mention} made the last pun "
+                           f"at {self.last_pun_time}")
         else:
             await ctx.send("I forgot who made the last pun.")
 
