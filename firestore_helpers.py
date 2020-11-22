@@ -8,9 +8,8 @@ import datetime
 
 
 def create_user_documents(self):
-    print(len(self.bot.users))
-    user_ids = [user.id for user in self.bot.users]
-    string_user_ids = ["u'" + str(user_id) + "'" for user_id in user_ids]
+    user_ids = [user.id for user in self.bot.users if not user.bot]
+    string_user_ids = [str(user_id) for user_id in user_ids]
     batch = self.db.batch()
     for user in string_user_ids:
         query = self.db.collection(u'puns').where(u'id', u'==', user)
@@ -21,6 +20,7 @@ def create_user_documents(self):
         if record_count == 0:
             print(f'{user} needs to be added to database')
             ref = self.db.collection(u'puns').document(user)
-            batch.set(ref, {u'date_added': datetime.datetime.now()})
+            batch.set(ref, {u'date_added': datetime.datetime.now(),
+                            u'pun_count': 0})
             print('All new users have been added!')
     batch.commit()
