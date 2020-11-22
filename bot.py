@@ -35,8 +35,8 @@ class RecordPuns(commands.Cog):
         except KeyError:
             self.puns[member.id] = {"count": 1}
         await ctx.send(
-            f"{member.mention} has made {self.puns[member.id]['count']} \
-            awful jokes."
+            f"{member.mention} has made {self.puns[member.id]['count']}"
+            "awful jokes."
         )
 
     @commands.command()
@@ -45,13 +45,13 @@ class RecordPuns(commands.Cog):
         try:
             self.puns[member.id]["count"] -= 1
             await ctx.send(
-                f"{member.mention}'s last joke wasn't that bad. They've \
-                made {self.puns[member.id]['count']} puns."
+                f"{member.mention}\'s last joke wasn't that bad. They\'ve"
+                "made {self.puns[member.id]['count']} puns."
             )
         except KeyError:
             await ctx.send(
-                f"{member.mention} hasn't made any bad jokes,\
-                 unbelievably."
+                f"{member.mention} hasn\'t made any bad jokes,"
+                "unbelievably."
             )
 
 
