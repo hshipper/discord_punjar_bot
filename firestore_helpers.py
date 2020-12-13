@@ -23,7 +23,7 @@ def create_user_documents(self):
                 {
                     "date_added": datetime.datetime.now(),
                     "pun_count": 0,
-                    "last_pun": None,
+                    "last_pun_at": None,
                 },
             )
     print("All new users have been added!")
