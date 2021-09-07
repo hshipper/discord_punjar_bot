@@ -4,6 +4,9 @@ mostly needed for initial setup
 """
 import datetime
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 # make a document for each member in the channel if they don't have one yet
 
@@ -26,5 +29,7 @@ def create_user_documents(self):
                     "last_pun_at": None,
                 },
             )
+            logger.info(f"{user} was added")
     print("All new users have been added!")
+    logger.info("All new users have been added")
     batch.commit()
