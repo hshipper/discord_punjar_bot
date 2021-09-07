@@ -4,6 +4,7 @@ A bot to listen to a discord server and keep track of puns that are made
 
 import discord
 from discord.ext import commands
+from discord.ext.commands.errors import MissingRequiredArgument
 from google.cloud import firestore
 from firestore_helpers import create_user_documents
 from datetime import datetime
@@ -60,12 +61,11 @@ class RecordPuns(commands.Cog):
                 "last_pun_at": firestore.SERVER_TIMESTAMP,
             }
         )
-        await ctx.send(f"{member.mention} has made {pun_count + 1} awful jokes.")
+        await ctx.send(f"{member.mention} has put ${pun_count + 1} in the jar.")
         logger.info(f"{member.name} made a deposit")
 
     @commands.command(name="multideposit")
     async def multideposit(self, ctx, member: discord.Member, qty: int):
-        member = member or ctx.author
         punmaker_doc = self.db.collection("puns").document(str(member.id))
         pun_dict = punmaker_doc.get().to_dict()
         pun_count = pun_dict["pun_count"]
@@ -75,13 +75,19 @@ class RecordPuns(commands.Cog):
                 "last_pun_at": firestore.SERVER_TIMESTAMP,
             }
         )
-        await ctx.send(f"{member.mention} has made {pun_count + 1} awful jokes.")
+        await ctx.send(
+            f"{member.mention} put {qty} in the jar, bringing their total to {pun_count + qty}."
+        )
         logger.info(f"{member} made a deposit")
-    
+
     @multideposit.error
-    async def multideposit_error(ctx, error):
-        if isinstance(error, commands.BadArgument):
+    async def multideposit_error(self, ctx, error):
+        if isinstance(error, commands.MissingRequiredArgument):
+            logger.info("multidepost_error missingrequiredargument")
             await ctx.send("Either a user wasn't tagged or a quantity was missing.")
+        if isinstance(error, commands.BadArgument):
+            logger.info("multidepost_error badargument")
+            await ctx.send("Either a user was mis-specifed or a number was missing")
 
     @commands.command(name="subtract")
     async def subtract(self, ctx, *, member: discord.Member = None):
@@ -95,13 +101,14 @@ class RecordPuns(commands.Cog):
                 {"pun_count": firestore.Increment(-1), "last_pun_at": None}
             )
             await ctx.send(
-                f"{member.mention}'s last joke wasn't that bad. They've"
-                f" made {pun_count - 1} puns."
+                f"{member.mention} took a pun from the jar. They have ${pun_count - 1} in the jar."
             )
             logger.info(f"{member} took a pun from the jar")
         else:
-            await ctx.send(f"{member.mention.name} hasn't made any bad jokes, unbelievably.")
-            logger.info(f"{member.mention.name} tried to have a pun removed but had none")
+            await ctx.send(f"{member.mention} hasn't made any bad jokes, unbelievably.")
+            logger.info(
+                f"{member.mention.name} tried to have a pun removed but had none to remove."
+            )
 
     @commands.command(name="puncount")
     async def count_puns(self, ctx, *, member: discord.Member = None):
@@ -112,25 +119,24 @@ class RecordPuns(commands.Cog):
         last_pun_time = pun_dict.get("last_pun_at")
         await ctx.send(
             f"{member.mention} has contributed ${pun_count} to the pun jar.\n"
-            f"Their last pun was at or on {last_pun_time}"
+            f"Their last pun was {last_pun_time.strftime('%a, %B %d, %Y at %I:%M:%S %p')}"
         )
         logger.info(f"{member.mention.name}'s pun total was checked")
 
     @commands.command(name="lastpun")
-    async def identify_last_pun(self, ctx, member: discord.Member = None):
+    async def identify_last_pun(self, ctx, *, member: discord.Member = None):
         if member:
             punmaker_doc = self.db.collection("puns").document(str(member.id))
-            last_pun_time = punmaker_doc.get().to_dict()["last_pun"]
-            self._last_pun_time = last_pun_time
+            last_pun_time = punmaker_doc.get().to_dict()["last_pun_at"]
             await ctx.send(
-                f"{member.mention} last made a pun at "
-                f"{last_pun_time.isoformat(sep=' ')}.\n"
+                f"{member.mention} last made a pun "
+                f"{last_pun_time.strftime('%a, %B %d, %Y at %I:%M:%S %p')}.\n"
             )
             logger.info("The most recent deposit was shared")
-        if self._last_punmaker:
+        elif self._last_punmaker:
             await ctx.send(
                 f"{self._last_punmaker.mention} made the last pun "
-                f"at {self._last_pun_time.isoformat(sep=' ')}."
+                f"{self._last_pun_time.strftime('%a, %B %d, %Y at %I:%M:%S %p')}."
             )
         else:
             await ctx.send("I forgot who made the last pun.")
