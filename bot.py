@@ -27,13 +27,6 @@ intents = discord.Intents.default()
 intents.members = True
 bot = commands.Bot(command_prefix="$", intents=intents)
 
-@bot.event
-async def on_ready():
-    READY_MESSAGE = f"{bot.user.name} is connected!"
-    print(READY_MESSAGE)
-    logger.info(READY_MESSAGE)
-    await bot.change_presence(activity=discord.Game(name="tracking your bad jokes"))
-
 class TurnOnBot(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -53,6 +46,8 @@ class TurnOnBot(commands.Cog):
     @setup_firestore.before_loop
     async def before_setup_firestore(self):
         print('Waiting for bot to be ready')
+        await self.bot.wait_until_ready()
+
 
 class RecordPuns(commands.Cog):
     def __init__(self, bot):
@@ -68,7 +63,7 @@ class RecordPuns(commands.Cog):
         self._last_pun_time = datetime.now()
         punmaker_doc = self.db.collection("puns").document(str(member.id))
         pun_dict = punmaker_doc.get().to_dict()
-        pun_count = pun_dict["pun_count"]
+        pun_count = pun_dict.get(["pun_count"], 0)
         punmaker_doc.update(
             {
                 "pun_count": firestore.Increment(1),
@@ -82,7 +77,7 @@ class RecordPuns(commands.Cog):
     async def multideposit(self, ctx, member: discord.Member, qty: int):
         punmaker_doc = self.db.collection("puns").document(str(member.id))
         pun_dict = punmaker_doc.get().to_dict()
-        pun_count = pun_dict["pun_count"]
+        pun_count = pun_dict.get(["pun_count"], 0)
         punmaker_doc.update(
             {
                 "pun_count": firestore.Increment(qty),
