@@ -35,12 +35,14 @@ class TurnOnBot(commands.Cog):
     @commands.Cog.listener("on_ready")
     async def initialize_bot(self):
         READY_MESSAGE = f"{bot.user.name} is connected!"
+        create_user_documents(self)
         print(READY_MESSAGE)
-        logger.info(READY_MESSAGE)
+        logger.info(READY_MESSAGE + "And create_user_document attempted.")
         await bot.change_presence(activity=discord.Game(name="tracking your bad jokes"))
     
     @tasks.loop(hours=24)
     async def setup_firestore(self):
+        logger.info("create_user_document attempted")
         create_user_documents(self)
 
     @setup_firestore.before_loop
@@ -63,7 +65,7 @@ class RecordPuns(commands.Cog):
         self._last_pun_time = datetime.now()
         punmaker_doc = self.db.collection("puns").document(str(member.id))
         pun_dict = punmaker_doc.get().to_dict()
-        pun_count = pun_dict.get(["pun_count"], 0)
+        pun_count = pun_dict.get("pun_count", 0)
         punmaker_doc.update(
             {
                 "pun_count": firestore.Increment(1),
@@ -77,7 +79,7 @@ class RecordPuns(commands.Cog):
     async def multideposit(self, ctx, member: discord.Member, qty: int):
         punmaker_doc = self.db.collection("puns").document(str(member.id))
         pun_dict = punmaker_doc.get().to_dict()
-        pun_count = pun_dict.get(["pun_count"], 0)
+        pun_count = pun_dict.get("pun_count", 0)
         punmaker_doc.update(
             {
                 "pun_count": firestore.Increment(qty),
