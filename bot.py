@@ -3,7 +3,7 @@ A bot to listen to a discord server and keep track of puns that are made
 """
 
 import discord
-from discord.ext import commands
+from discord.ext import tasks, commands
 from discord.ext.commands.errors import MissingRequiredArgument
 from google.cloud import firestore
 from firestore_helpers import create_user_documents
@@ -27,7 +27,6 @@ intents = discord.Intents.default()
 intents.members = True
 bot = commands.Bot(command_prefix="$", intents=intents)
 
-
 @bot.event
 async def on_ready():
     READY_MESSAGE = f"{bot.user.name} is connected!"
@@ -35,6 +34,25 @@ async def on_ready():
     logger.info(READY_MESSAGE)
     await bot.change_presence(activity=discord.Game(name="tracking your bad jokes"))
 
+class TurnOnBot(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+        self.db = firestore.Client()
+
+    @commands.Cog.listener("on_ready")
+    async def initialize_bot(self):
+        READY_MESSAGE = f"{bot.user.name} is connected!"
+        print(READY_MESSAGE)
+        logger.info(READY_MESSAGE)
+        await bot.change_presence(activity=discord.Game(name="tracking your bad jokes"))
+    
+    @tasks.loop(days=7)
+    async def setup_firestore(self):
+        create_user_documents(self)
+
+    @setup_firestore.before_loop
+    async def before_setup_firestore(self):
+        print('Waiting for bot to be ready')
 
 class RecordPuns(commands.Cog):
     def __init__(self, bot):
@@ -42,10 +60,6 @@ class RecordPuns(commands.Cog):
         self._last_punmaker = None
         self._last_pun_time = None
         self.db = firestore.Client()
-
-    @commands.Cog.listener()
-    async def on_ready(self):
-        create_user_documents(self)
 
     @commands.command(name="deposit")
     async def deposit(self, ctx, *, member: discord.Member = None):
@@ -142,7 +156,7 @@ class RecordPuns(commands.Cog):
             await ctx.send("I forgot who made the last pun.")
             logger.info("The last deposit couldn't be found")
 
-
+bot.add_cog(TurnOnBot(bot))
 bot.add_cog(RecordPuns(bot))
 
 
