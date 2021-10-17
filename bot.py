@@ -46,7 +46,7 @@ class TurnOnBot(commands.Cog):
         logger.info(READY_MESSAGE)
         await bot.change_presence(activity=discord.Game(name="tracking your bad jokes"))
     
-    @tasks.loop(days=7)
+    @tasks.loop(hours=24)
     async def setup_firestore(self):
         create_user_documents(self)
 
